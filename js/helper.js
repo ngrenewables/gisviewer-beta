@@ -14,6 +14,7 @@ function closeNav() {
 
 
 function togglePanel(panel){
+    $(".panel").addClass("collapse")
     $(`#${panel}`).toggleClass('collapse');
 }
 
