@@ -152,7 +152,7 @@ require([
         // Panel widgets - add legend
         const legend = new Expand({
             content: new Legend({
-              view: view,
+              view: mapView,
               style: "card" // other styles include 'classic'
             }),
             view: view,
