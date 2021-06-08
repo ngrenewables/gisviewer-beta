@@ -144,16 +144,17 @@ require([
         });
         mapView.ui.add(scaleBar, "bottom-left");
 
-        var attribution = new Attribution({
+        /*var attribution = new Attribution({
             view: mapView
         });
-        mapView.ui.add(attribution, "manual");
+        mapView.ui.add(attribution, "manual");*/
 
         // Panel widgets - add legend
         var legendWidget = new Legend({
-            container: "legendDiv",
             view: mapView
         });
+
+        mapView.ui.add(legendWidget,"bottom-right")
 
         mapView.ui.add("topbar", "top-right");
 
