@@ -19,7 +19,7 @@ require([
     "esri/widgets/BasemapToggle",
     "esri/widgets/ScaleBar",
     "esri/widgets/Attribution",
-
+    "esri/widgets/Expand",
     // Bootstrap
     "bootstrap/Collapse",
     "bootstrap/Dropdown",
@@ -35,7 +35,7 @@ require([
     "esri/widgets/Print",
     "esri/widgets/LayerList",
     "dojo/domReady!"
-], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution, Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
+], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
     esriConfig, Portal, OAuthInfo, esriId, Print,LayerList) {
 
 
@@ -150,11 +150,15 @@ require([
         mapView.ui.add(attribution, "manual");*/
 
         // Panel widgets - add legend
-        var legendWidget = new Legend({
-            view: mapView
-        });
-
-        mapView.ui.add(legendWidget,"bottom-right")
+        const legend = new Expand({
+            content: new Legend({
+              view: view,
+              style: "card" // other styles include 'classic'
+            }),
+            view: view,
+            expanded: true
+          });
+        mapView.ui.add(legend, "bottom-right");
 
         mapView.ui.add("topbar", "top-right");
 
