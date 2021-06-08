@@ -155,7 +155,7 @@ require([
               view: mapView,
               style: "card" // other styles include 'classic'
             }),
-            view: view,
+            view: mapView,
             expanded: true
           });
         mapView.ui.add(legend, "bottom-right");
