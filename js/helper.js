@@ -12,8 +12,14 @@ function closeNav() {
 }
 */
 
+
+function togglePanel(panel){
+    $(`#${panel}`).toggleClass('collapse');
+}
+
 function getURLParams(paramName){
-    
+    //var hash = window.location.hash.substr(1)
+    console.log(location.hash)
     const queryString = window.location.search;
     
     const urlParams = new URLSearchParams(queryString);
