@@ -94,7 +94,7 @@ require([
         
         // Popup and panel sync
         mapView.when(function (m) {
-            
+            document.getElementById("mapTitle").innerHTML =  mapView.map.portalItem.title
             var print = new Print({
                 view: mapView,
                 // specify your own print service
