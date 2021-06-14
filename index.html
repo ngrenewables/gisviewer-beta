@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="description" content="National Grid Renewables, GIS Data Viewer">
- 
+
   <title>National Grid Renewables</title>
 
- 
+  <link rel="stylesheet" href="./css/font-awesome-4.7.0/css/font-awesome.min.css">
 
   <!-- Calcite Maps Bootstrap -->
   <link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-bootstrap.min-v0.10.css">
-  
+
   <!-- Calcite Maps -->
   <link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-arcgis-4.x.min-v0.10.css">
 
   <!-- ArcGIS JS 4 -->
   <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/css/main.css">
 
-  
+
   <style>
     html,
     body {
@@ -29,52 +30,91 @@
     }
 
 
-    .bg-secondary{
-      color: RGB(84,185,72);
+    .bg-secondary {
+      color: RGB(84, 185, 72);
     }
 
     #topbar {
-        background: #fff;
-        padding: 10px;
-      }
+      background: #fff;
+      padding: 10px;
+    }
 
-      .action-button {
-        font-size: 16px;
-        background-color: transparent;
-        border: 1px solid #d3d3d3;
-        color: #6e6e6e;
-        height: 32px;
-        width: 32px;
-        text-align: center;
-        box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
-      }
+    .action-button {
+      font-size: 16px;
+      background-color: transparent;
+      border: 1px solid #d3d3d3;
+      color: #6e6e6e;
+      height: 32px;
+      width: 32px;
+      text-align: center;
+      box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+    }
 
-      .action-button:hover,
-      .action-button:focus {
-        background: #0079c1;
-        color: #e4e4e4;
-      }
+    .action-button:hover,
+    .action-button:focus {
+      background: #0079c1;
+      color: #e4e4e4;
+    }
 
-      .active {
-        background: #0079c1;
-        color: #e4e4e4;
-      }
+    .active {
+      background: #0079c1;
+      color: #e4e4e4;
+    }
 
-      .esri-icon-non-visible::before {   content: "\e610";   }.esri-icon-visible::before {   content: "\e611";   }
+    .esri-icon-non-visible::before {
+      content: "\e610";
+    }
 
+    .esri-icon-visible::before {
+      content: "\e611";
+    }
+
+    .activeStreeView {
+      color: RGB(84, 185, 72);
+    }
+
+
+    #info {
+      background-color: black;
+      opacity: 0.75;
+      color: orange;
+      font-size: 18pt;
+      padding: 8px;
+      visibility: hidden;
+    }
+
+    #streetViewIcon .tooltiptext {
+      visibility: hidden;
+      width: 120px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+
+      /* Position the tooltip */
+      position: absolute;
+      z-index: 1;
+      top: -5px;
+      left: 105%;
+    }
+
+    #streetViewIcon:hover .tooltiptext {
+      visibility: visible;
+    }
   </style>
 
 </head>
 
 <body class="calcite-maps calcite-nav-top">
-  <!-- Navbar --> 
+  <!-- Navbar -->
 
   <nav class="navbar calcite-navbar navbar-fixed-top calcite-text-light calcite-bg-dark  calcite-bgcolor-dark-blue">
     <!-- Menu -->
-    
+
     <!-- Title -->
     <div class="calcite-title calcite-overflow-hidden">
-      <span class="calcite-title-main"><img src="./images/logo.png" />    Geo Data Viewer</span>
+      <span class="calcite-title-main"><img src="./images/logo.png" /> Geo Data Viewer</span>
       <span class="calcite-title-divider hidden-xs"></span>
       <span class="calcite-title-sub hidden-xs" id="mapTitle"></span>
     </div>
@@ -85,10 +125,12 @@
           <div id="searchWidgetDiv"></div>
         </div>
       </li>
-      <li><a role="button" onClick="togglePanel('panelLayers')" ><span class="glyphicon glyphicon-list"></span> Layers</a></li>
-      <li><a role="button" onClick="togglePanel('panelPrint')" ><span class="glyphicon glyphicon-print"></span> Print</a></li>
+      <li><a role="button" onClick="togglePanel('panelLayers')"><span class="glyphicon glyphicon-list"></span>
+          Layers</a></li>
+      <li><a role="button" onClick="togglePanel('panelPrint')"><span class="glyphicon glyphicon-print"></span> Print</a>
+      </li>
     </ul>
-     
+
   </nav>
 
   <!--/.calcite-navbar -->
@@ -96,7 +138,11 @@
   <!-- Map  -->
 
   <div class="calcite-map calcite-map-absolute">
-    <div id="mapViewDiv"></div>
+    <div id="mapViewDiv">
+      <div id="streetViewIcon" style="left:20px;top:275px;position:absolute;z-index:999"><i style="cursor:pointer"
+          onClick="showGSV()" class="fa fa-street-view fa-2x"></i><span class="tooltiptext">Select and Click on Map to see StreetView</span></div>
+
+    </div>
   </div>
 
   <!-- /.calcite-map -->
@@ -105,19 +151,21 @@
 
   <div class="calcite-panels calcite-panels-right calcite-text-light calcite-bg-dark panel-group">
 
-       
+
 
     <!-- Panel - Layers -->
 
     <div id="panelLayers" class="panel collapse">
       <div id="headingLayers" class="panel-heading calcite-bgcolor-dark-blue" role="tab">
         <div class="panel-title">
-          <a class="panel-toggle" ><span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span><span class="panel-label">Map Layers</span></a> 
-          <a class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelLayers"><span class="esri-icon esri-icon-close" aria-hidden="true"></span></a> 
+          <a class="panel-toggle"><span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span><span
+              class="panel-label">Map Layers</span></a>
+          <a class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelLayers"><span
+              class="esri-icon esri-icon-close" aria-hidden="true"></span></a>
         </div>
       </div>
       <div id="collapseLayers" class="panel-collapse" role="tabpanel" aria-labelledby="headingLayers">
-        <div class="panel-body">            
+        <div class="panel-body">
           <div id="layersDiv"></div>
         </div>
       </div>
@@ -129,26 +177,24 @@
     <div id="panelPrint" class="panel collapse">
       <div id="headingPrint" class="panel-heading calcite-bgcolor-dark-blue" role="tab">
         <div class="panel-title">
-          <a class="panel-toggle" ><span class="glyphicon glyphicon-print" aria-hidden="true"></span><span class="panel-label">Print</span></a> 
-          <a class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelPrint"><span class="esri-icon esri-icon-close" aria-hidden="true"></span></a> 
+          <a class="panel-toggle"><span class="glyphicon glyphicon-print" aria-hidden="true"></span><span
+              class="panel-label">Print</span></a>
+          <a class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelPrint"><span
+              class="esri-icon esri-icon-close" aria-hidden="true"></span></a>
         </div>
       </div>
       <div id="collapsePrint" class="panel-collapse" role="tabpanel" aria-labelledby="headingPrint">
-        <div class="panel-body">            
+        <div class="panel-body">
           <div id="printDiv"></div>
         </div>
       </div>
     </div>
 
-    
+
 
     <div id="topbar">
-      <button
-        class="action-button esri-icon-measure-line"
-        id="distanceButton"
-        type="button"
-        title="Measure distance between two or more points"
-      ></button>
+      <button class="action-button esri-icon-measure-line" id="distanceButton" type="button"
+        title="Measure distance between two or more points"></button>
       <button class="action-button esri-icon-measure-area" id="areaButton" type="button" title="Measure area"></button>
     </div>
 
@@ -172,7 +218,10 @@
   <!-- ArcGIS JS 4 -->
   <script src="https://js.arcgis.com/4.19/"></script>
 
-  <script src="https://colorlib.com/etc/bootstrap-sidebar/sidebar-04/js/jquery.min.js"></script>
+  <!--script src="https://colorlib.com/etc/bootstrap-sidebar/sidebar-04/js/jquery.min.js"></script-->
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
   <script src="./js/init4x.js"> </script>
 
@@ -180,5 +229,8 @@
 
   <script src="./js/helper.js"> </script>
 
+  <script src="./js/gsv.js"> </script>
+
 </body>
+
 </html>

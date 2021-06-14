@@ -2,7 +2,9 @@ var app = {
         zoom: 2,
         lonlat: [-40,0],
         view: null, 
-        mapDiv: "mapViewDiv"
+        mapDiv: "mapViewDiv",
+        streetViewActive:false,
+        sketchViewModel:null
 }
 var activeWidget = null;
 require([
@@ -34,9 +36,11 @@ require([
     "esri/identity/IdentityManager",
     "esri/widgets/Print",
     "esri/widgets/LayerList",
+    "esri/layers/WebTileLayer",
+    "esri/layers/GraphicsLayer",
     "dojo/domReady!"
 ], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
-    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList) {
+    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer) {
 
 
     esriConfig.portalUrl = "https://lwweb01.geronimoenergy.local/portal/sharing";
@@ -52,6 +56,17 @@ require([
         // authNamespace: "portal_oauth_inline",
         popup: true
     });
+
+    /*const info = new OAuthInfo({
+        // Swap this ID out with registered application ID
+        appId: "ri3OXvyMneOGGobH",
+        // Uncomment the next line and update if using your own portal
+        //portalUrl: "https://lwweb01.geronimoenergy.local/portal",
+        // Uncomment the next line to prevent the user's signed in state from being shared with other apps on the same domain with the same authNamespace value.
+        // authNamespace: "portal_oauth_inline",
+        popup: true
+    });*/
+
     esriId.registerOAuthInfos([info]);
 
     esriId.getCredential(info.portalUrl + "/sharing");
@@ -108,7 +123,16 @@ require([
               });
 
             CalciteMapArcGISSupport.setPopupPanelSync(mapView);
+
+            initGSV();
         });
+
+        mapView.on("click",function(e) {
+            
+            if(app.streetViewActive){
+                window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${e.mapPoint.latitude},${e.mapPoint.longitude}&cbp=11,0,0,0,0`);
+            }
+        })
 
         // Search - add to navbar
         var searchWidget = new Search({
@@ -161,11 +185,25 @@ require([
         mapView.ui.add(legend, "bottom-right");
 
         mapView.ui.add("topbar", "top-right");
-
         
 
-        
+    }
 
+
+    function initGSV(){
+        
+        var streetViewTileLayer = new WebTileLayer("https://maps.googleapis.com/maps/vt?lyrs=svv&apiv3&style=40,18&gl=US&&x={col}&y={row}&z={level}", {
+            id: 'streetViewAvailability',
+            title: ' StreetView Availability',
+            copyright: 'Google',
+            opacity: 1,
+            minScale: 500000,
+            visible: false
+        });
+        app.view.map.add(streetViewTileLayer);
+
+        setupGSV();
+    
     }
 
 
