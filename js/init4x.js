@@ -131,6 +131,7 @@ require([
             
             if(app.streetViewActive){
                 window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${e.mapPoint.latitude},${e.mapPoint.longitude}&cbp=11,0,0,0,0`);
+                showGSV();
             }
         })
 
