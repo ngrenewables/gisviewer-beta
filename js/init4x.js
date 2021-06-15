@@ -113,7 +113,7 @@ require([
             var print = new Print({
                 view: mapView,
                 // specify your own print service
-                printServiceUrl: "https://lwweb01.geronimoenergy.local/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task",
+                printServiceUrl: "https://lwweb01.geronimoenergy.local/arcgis/rest/services/GPServices/CustomExportWebMap/GPServer/Export%20Web%20Map",
                 container:"printDiv"
               });
 
