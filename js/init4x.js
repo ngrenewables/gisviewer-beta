@@ -160,7 +160,7 @@ require([
 
         var basemapToggle = new BasemapToggle({
             view: mapView,
-            secondBasemap: "satellite"
+            secondBasemap: "topo"
         });
         mapView.ui.add(basemapToggle, "top-left");
 
