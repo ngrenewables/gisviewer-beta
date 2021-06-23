@@ -8,16 +8,22 @@
 
   <title>National Grid Renewables</title>
 
-  <link rel="stylesheet" href="./css/font-awesome-4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="./css/font-awesome-4.7.0/css/font-awesome.min.css"/>
 
   <!-- Calcite Maps Bootstrap -->
-  <link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-bootstrap.min-v0.10.css">
+  <link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-bootstrap.min-v0.10.css"/>
 
   <!-- Calcite Maps -->
-  <link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-arcgis-4.x.min-v0.10.css">
+  <link rel="stylesheet" href="https://esri.github.io/calcite-maps/dist/css/calcite-maps-arcgis-4.x.min-v0.10.css"/>
 
   <!-- ArcGIS JS 4 -->
-  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/css/main.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/css/main.css" />
+
+  <link rel="stylesheet" href="./css/main.css">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.1.0/introjs.min.css" />
+  
+  <link rel="stylesheet" href="./css/introTheme.css" />
 
 
   <style>
@@ -30,78 +36,8 @@
     }
 
 
-    .bg-secondary {
-      color: RGB(84, 185, 72);
-    }
+    
 
-    #topbar {
-      background: #fff;
-      padding: 10px;
-    }
-
-    .action-button {
-      font-size: 16px;
-      background-color: transparent;
-      border: 1px solid #d3d3d3;
-      color: #6e6e6e;
-      height: 32px;
-      width: 32px;
-      text-align: center;
-      box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
-    }
-
-    .action-button:hover,
-    .action-button:focus {
-      background: #0079c1;
-      color: #e4e4e4;
-    }
-
-    .active {
-      background: #0079c1;
-      color: #e4e4e4;
-    }
-
-    .esri-icon-non-visible::before {
-      content: "\e610";
-    }
-
-    .esri-icon-visible::before {
-      content: "\e611";
-    }
-
-    .activeStreeView {
-      color: RGB(84, 185, 72);
-    }
-
-
-    #info {
-      background-color: black;
-      opacity: 0.75;
-      color: orange;
-      font-size: 18pt;
-      padding: 8px;
-      visibility: hidden;
-    }
-
-    #streetViewIcon .tooltiptext {
-      visibility: hidden;
-      width: 120px;
-      background-color: black;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 5px 0;
-
-      /* Position the tooltip */
-      position: absolute;
-      z-index: 1;
-      top: -5px;
-      left: 105%;
-    }
-
-    #streetViewIcon:hover .tooltiptext {
-      visibility: visible;
-    }
   </style>
 
 </head>
@@ -125,10 +61,9 @@
           <div id="searchWidgetDiv"></div>
         </div>
       </li>
-      <li><a role="button" onClick="togglePanel('panelLayers')"><span class="glyphicon glyphicon-list"></span>
-          Layers</a></li>
-      <li><a role="button" onClick="togglePanel('panelPrint')"><span class="glyphicon glyphicon-print"></span> Print</a>
-      </li>
+      <li><a role="button" onClick="togglePanel('panelLayers')"><span class="glyphicon glyphicon-list"></span> Layers</a></li>
+      <li><a role="button" onClick="togglePanel('panelFilter')"><span class="glyphicon glyphicon-filter"></span> Table</a></li>
+      <li><a role="button" onClick="togglePanel('panelPrint')"><span class="glyphicon glyphicon-print"></span> Print</a></li>
     </ul>
 
   </nav>
@@ -139,10 +74,15 @@
 
   <div class="calcite-map calcite-map-absolute">
     <div id="mapViewDiv">
-      <div id="streetViewIcon" style="left:20px;top:275px;position:absolute;z-index:999"><i style="cursor:pointer"
-          onClick="showGSV()" class="fa fa-street-view fa-2x"></i><span class="tooltiptext">Select and Click on Map to see StreetView</span></div>
+      <div id="streetViewIcon" style="left:20px;top:275px;position:absolute;z-index:999;color:#fff;"><i id="streetIcon" style="cursor:pointer"
+          onClick="showGSV()" class="fa fa-street-view fa-3x"></i><span class="tooltiptext">Select and Click on Map to see StreetView</span></div>
 
     </div>
+    
+  </div>
+
+  <div class="container" id="tableContainer">
+       <div id="tableDiv"></div>
   </div>
 
   <!-- /.calcite-map -->
@@ -172,6 +112,36 @@
     </div>
 
 
+    <div id="panelFilter" class="panel collapse">
+      <div id="headingFilter" class="panel-heading calcite-bgcolor-dark-blue" role="tab">
+        <div class="panel-title">
+          <a class="panel-toggle"><span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span><span
+              class="panel-label">Map Filter</span></a>
+          <a onclick="$('#tableContainer').hide()" class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelFilter"><span
+              class="esri-icon esri-icon-close" aria-hidden="true"></span></a>
+        </div>
+      </div>
+      <div id="collapseFilter" class="panel-collapse" role="tabpanel" aria-labelledby="headingFilter">
+        <div class="panel-body">
+          <div id="FilterDiv">
+            <p>Pick Pick Layer and Select on Map:</p>
+            <select id="selectLayer" class="form-control">
+                  <option value="" disabled selected hidden>Select Layer</option>
+            </select>
+            <br/>
+            <div id="buttonbar">
+              <button class="action-button esri-icon-cursor-marquee" id="select-by-rectangle" type="button"
+                title="Select on map"></button>
+              <button class="action-button esri-icon-erase" id="clear-selection" type="button" title="Clear Selections"></button>
+              <!--button style="float:right;width:100px;display:none;" class="action-button esri-icon-down" id="toggle-table" onclick="toggleTablePanel()" type="button" title="Clear Selections"> Hide Table</button-->
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Panel - Layers -->
 
     <div id="panelPrint" class="panel collapse">
@@ -189,6 +159,9 @@
         </div>
       </div>
     </div>
+
+
+    
 
 
 
@@ -215,13 +188,18 @@
     };
   </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/4.1.0/intro.min.js"> </script>
+
   <!-- ArcGIS JS 4 -->
   <script src="https://js.arcgis.com/4.19/"></script>
 
   <!--script src="https://colorlib.com/etc/bootstrap-sidebar/sidebar-04/js/jquery.min.js"></script-->
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  
+
+  <script src="./js/jquery-3.6.0.min.js" ></script>
+
+  
 
   <script src="./js/init4x.js"> </script>
 
@@ -230,6 +208,8 @@
   <script src="./js/helper.js"> </script>
 
   <script src="./js/gsv.js"> </script>
+
+  <script src="./js/introTour.js"> </script>
 
 </body>
 

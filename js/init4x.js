@@ -4,7 +4,10 @@ var app = {
         view: null, 
         mapDiv: "mapViewDiv",
         streetViewActive:false,
-        sketchViewModel:null
+        sketchViewModel:null,
+        featureTable:null,
+        selectedFeatures:null,
+        homeWidget:null
 }
 var activeWidget = null;
 require([
@@ -38,9 +41,16 @@ require([
     "esri/widgets/LayerList",
     "esri/layers/WebTileLayer",
     "esri/layers/GraphicsLayer",
+    "esri/core/Collection",
+    "esri/widgets/FeatureTable",
+    "esri/widgets/Sketch/SketchViewModel",
+    "esri/Graphic",
+    "esri/geometry/geometryEngineAsync",
+    "esri/widgets/FeatureTable/Grid/support/ButtonMenu",
+    "esri/widgets/FeatureTable/Grid/support/ButtonMenuItem",
     "dojo/domReady!"
 ], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
-    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer) {
+    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,Graphic,geometryEngineAsync,ButtonMenu,ButtonMenuItem) {
 
 
     esriConfig.portalUrl = "https://lwweb01.geronimoenergy.local/portal/sharing";
@@ -57,16 +67,7 @@ require([
         popup: true
     });
 
-    /*const info = new OAuthInfo({
-        // Swap this ID out with registered application ID
-        appId: "ri3OXvyMneOGGobH",
-        // Uncomment the next line and update if using your own portal
-        //portalUrl: "https://lwweb01.geronimoenergy.local/portal",
-        // Uncomment the next line to prevent the user's signed in state from being shared with other apps on the same domain with the same authNamespace value.
-        // authNamespace: "portal_oauth_inline",
-        popup: true
-    });*/
-
+    
     esriId.registerOAuthInfos([info]);
 
     esriId.getCredential(info.portalUrl + "/sharing");
@@ -74,7 +75,8 @@ require([
 
 
     esriId.checkSignInStatus(info.portalUrl + "/sharing")
-        .then(() => {
+        .then((e) => {
+            
             loadMap();
         })
         .catch((e) => {
@@ -106,6 +108,26 @@ require([
 
         app.view = mapView;
 
+
+
+        const selectionGraphicsLayer = new GraphicsLayer({id:"selection_graphic"});
+        mapView.map.add(selectionGraphicsLayer);
+
+        app.sketchViewModel = new SketchViewModel({
+            view: mapView,
+            layer: selectionGraphicsLayer
+        });
+
+        app.sketchViewModel.on("create", async (event) => {
+            if (event.state === "complete") {
+              // this polygon will be used to query features that intersect it
+              const geometries = selectionGraphicsLayer.graphics.map(function(graphic){
+                return graphic.geometry
+              });
+              const queryGeometry = await geometryEngineAsync.union(geometries.toArray());
+              selectLayerFeatures(queryGeometry);
+            }
+        });
         
         // Popup and panel sync
         mapView.when(function (m) {
@@ -117,14 +139,34 @@ require([
                 container:"printDiv"
               });
 
-              var layerList = new LayerList({
+            var layerList = new LayerList({
                 view: mapView,
                 container:"layersDiv"
-              });
+            });
 
             CalciteMapArcGISSupport.setPopupPanelSync(mapView);
 
+            
+            mapView.map.allLayers.forEach(function(lyr) {
+                if(lyr.type == "feature"){
+
+                   $("#selectLayer").append("<option value='" + lyr.id + "'>" + lyr.title + "</option>" )
+                }
+                
+            });
+
+            $("#FilterDiv").on("change","#selectLayer",function(e) {
+                var selectedLayerId = $(this).val();
+
+                if(selectedLayerId){
+                    initDataTable(selectedLayerId);
+                    $("#toggle-table").show();
+                }
+            })
+
             initGSV();
+
+            initTour();
         });
 
         mapView.on("click",function(e) {
@@ -147,6 +189,7 @@ require([
             view: mapView
         });
         mapView.ui.add(home, "top-left");
+        
 
         var zoom = new Zoom({
             view: mapView
@@ -158,11 +201,22 @@ require([
         });
         mapView.ui.add(compass, "top-left");
 
+         // Panel widgets - add legend
+         const legend = new Expand({
+            content: new Legend({
+              view: mapView,
+              style: "card" // other styles include 'classic'
+            }),
+            view: mapView,
+            expanded: false
+          });
+        mapView.ui.add(legend, "top-left");
+
         var basemapToggle = new BasemapToggle({
             view: mapView,
             nextBasemap: "topo"
         });
-        mapView.ui.add(basemapToggle, "top-left");
+        mapView.ui.add(basemapToggle, "bottom-right");
 
         var scaleBar = new ScaleBar({
             view: mapView
@@ -174,16 +228,7 @@ require([
         });
         mapView.ui.add(attribution, "manual");*/
 
-        // Panel widgets - add legend
-        const legend = new Expand({
-            content: new Legend({
-              view: mapView,
-              style: "card" // other styles include 'classic'
-            }),
-            view: mapView,
-            expanded: true
-          });
-        mapView.ui.add(legend, "bottom-right");
+       
 
         mapView.ui.add("topbar", "top-right");
         
@@ -205,6 +250,82 @@ require([
 
         setupGSV();
     
+    }
+
+
+    function initDataTable(layerId){
+
+        if(app.featureTable){
+            app.featureTable.destroy();
+            app.featureTable = null;
+            var tableDiv = document.createElement('div'); 
+            tableDiv.setAttribute("id", "tableDiv");
+            document.getElementById("tableContainer").appendChild(tableDiv);
+        }
+        
+        $(".container").show();
+
+       var lyr = app.view.map.findLayerById(layerId);
+       
+       if(!lyr) {
+           console.log("error loading layer")
+           return false
+       }
+       
+       if(!lyr.visible) {
+           lyr.visible = true;
+       }
+
+       const fieldMap = lyr.fields.filter(function (f) {
+           return f.type !== "oid" || f.name.match(/Shape/gi) == -1
+       }).map( function(e) {
+          return {"name":e.name,"label":e.alias}
+          
+       });
+
+       
+      const buttonMenu = new ButtonMenu ({
+        items: [{
+            label: "Export to CSV",
+            iconClass: "esri-icon-file-excel",
+            clickFunction: function (event) {
+                
+                if(app.selectedFeatures){
+                    configExportTOCSV(app.selectedFeatures)
+                }else{
+                    const query = {
+                        where: "1=1",
+                        outFields: ["*"],
+                        returnGeometry:false
+                    };            
+                    // query graphics from the csv layer view. Geometry set for the query
+                    // can be polygon for point features and only intersecting geometries are returned
+                    app.featureTable.layer.queryFeatures(query)
+                        .then((results) => {
+                            configExportTOCSV(results.features);
+    
+                    });
+                }
+            }
+        }]
+      });
+       
+       app.featureTable = new FeatureTable({
+        view: app.view,
+        layer: lyr,
+        highlightOnRowSelectEnabled: false,
+        fieldConfigs: fieldMap,
+        menuConfig:buttonMenu,
+        container: document.getElementById("tableDiv")
+      });
+
+      setTimeout(function(){
+        $(".esri-feature-table__loader-container").html('<a role="button" onclick="toggleTablePanel()" ><span style="display:inline;color:black;font-size:24;font-weight:bold;margin-top:10px;" class="esri-icon-close"></span></a>');
+
+      },2000)
+      
+      
+
     }
 
 
