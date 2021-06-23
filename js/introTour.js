@@ -1,10 +1,10 @@
 var introguide = introJs();
-function initTour(){
-    tooltipClass: 'customTooltip',
+function initTour(){    
     introguide.setOptions({
+        skipLabel: 'Skip Tour',
         steps: [{
-          title: 'Take a Tour !!',
-          intro: 'Welcone to National Grid Renewable - Geo Data Viewer !! 👋',
+          title: 'Take a Tour !!  👋',
+          intro: '<b>Welcone to National Grid Renewable - Geo Data Viewer !! </b>',
           
         },
         

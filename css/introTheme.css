@@ -55,5 +55,7 @@
   }
 
   .introjs-tooltiptext{
-      font-size:12px;
+      font-size:14px;
+      min-width: 300px;
+      max-width: 400px;
   }
