@@ -7,7 +7,10 @@ var app = {
         sketchViewModel:null,
         featureTable:null,
         selectedFeatures:null,
-        homeWidget:null
+        homeWidget:null,
+        ref:null,
+        propertyResults:null,
+        isSelectingProperties:false
 }
 var activeWidget = null;
 require([
@@ -40,17 +43,24 @@ require([
     "esri/widgets/Print",
     "esri/widgets/LayerList",
     "esri/layers/WebTileLayer",
+    "esri/layers/TileLayer",
     "esri/layers/GraphicsLayer",
     "esri/core/Collection",
     "esri/widgets/FeatureTable",
     "esri/widgets/Sketch/SketchViewModel",
     "esri/Graphic",
+    "esri/tasks/QueryTask", 
+    "esri/tasks/support/Query",
     "esri/geometry/geometryEngineAsync",
     "esri/widgets/FeatureTable/Grid/support/ButtonMenu",
     "esri/widgets/FeatureTable/Grid/support/ButtonMenuItem",
     "dojo/domReady!"
-], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
-    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,Graphic,geometryEngineAsync,ButtonMenu,ButtonMenuItem) {
+], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, 
+    Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
+    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,TileLayer,
+    GraphicsLayer,Collection,FeatureTable,SketchViewModel,
+    Graphic,QueryTask, Query,
+    geometryEngineAsync,ButtonMenu,ButtonMenuItem) {
 
 
     esriConfig.portalUrl = "https://lwweb01.geronimoenergy.local/portal/sharing";
@@ -125,13 +135,38 @@ require([
                 return graphic.geometry
               });
               const queryGeometry = await geometryEngineAsync.union(geometries.toArray());
-              selectLayerFeatures(queryGeometry);
+              if(app.isSelectingProperties == true){
+                queryLayer(queryGeometry);
+              }else{
+                selectLayerFeatures(queryGeometry);
+              }
+              
             }
         });
         
         // Popup and panel sync
         mapView.when(function (m) {
-            document.getElementById("mapTitle").innerHTML =  mapView.map.portalItem.title
+            
+            console.log(app.view)
+            
+            const refNumbers = m.map.portalItem.tags.filter(function (e) {
+                return e.match(/ref:/g)
+            })
+
+            if(refNumbers.length) {
+                const refNumber = refNumbers[0].split(":")[1];
+                app.ref = refNumber;
+                var tiled = new TileLayer({url:"https://reportallusa.com/api/rest_services/client=" + refNumber + "/Parcels/MapServer",
+                                visible:false,
+                                "title":"Parcel Boundary",
+                                "id":"parcel_boundary",
+                                "minScale":28800
+                            });
+                mapView.map.add(tiled);
+            }
+            
+
+            document.getElementById("mapTitle").innerHTML =  mapView.map.portalItem.title;
             var print = new Print({
                 view: mapView,
                 // specify your own print service
@@ -169,11 +204,18 @@ require([
             initTour();
         });
 
-        mapView.on("click",function(e) {
+        mapView.on("click",function(evt) {
+
+            
             
             if(app.streetViewActive){
-                window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${e.mapPoint.latitude},${e.mapPoint.longitude}&cbp=11,0,0,0,0`);
+                window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${evt.mapPoint.latitude},${evt.mapPoint.longitude}&cbp=11,0,0,0,0`);
                 showGSV();
+            }else{
+                const lyr = mapView.map.findLayerById("parcel_boundary");
+                if(lyr){
+                    queryLayer(evt.mapPoint);
+                }
             }
         })
 
@@ -252,6 +294,98 @@ require([
     
     }
 
+
+    function queryLayer(geometry){
+
+        var queryTask = new QueryTask({
+            url:"https://reportallusa.com/api/rest_services/client=" + app.ref + "/Parcels/MapServer/0"
+          });
+        var query = new Query();
+        query.returnGeometry = true;
+        query.geometry =  geometry;
+        query.outFields = ["*"];
+        query.outSpatialReference = { "wkid": 102100 };
+        $("#loading_spinner").show();
+        queryTask.execute(query).then(getResults).catch(promiseRejected);
+        
+       
+    }
+
+    function getResults(response){
+        let symbol = {
+            type: "simple-fill",  // autocasts as new SimpleFillSymbol()
+            color: [ 212,200,30, 0.5 ],
+            style: "solid",
+            outline: {  // autocasts as new SimpleLineSymbol()
+              color: "white",
+              width: 1
+            }
+          };
+       
+        const grpLayer = app.view.map.findLayerById("selection_graphic");
+        grpLayer.removeAll();
+        app.propertyResults = response;
+        if(response.features.length){
+            app.isSelectingProperties = false;
+            if(response.features.length > 1){
+                const headerLabels = {"Parcel Id":"parcel_id","Owner":"owner","Address":["mail_address1","mail_address2","mail_address3"]}
+                var content = "<thead><tr>";
+                $.each(headerLabels,function(key,value){
+                    content += "<td><b>" + key + "</b></td>";
+                });
+                content += "</tr></thead><tbody>";
+
+                response.features.forEach(function(feature) {
+                    var grp = new Graphic(feature.geometry,symbol);
+                    grpLayer.add(grp)
+                    const attr = feature.attributes;
+                    content += "<tr>";
+                    $.each(headerLabels,function(key,value) {
+                        if(Array.isArray(value)){
+                            const vals = value.map( (f) => feature.attributes[f])
+                            content += "<td>" + vals.join(",") + "</td>";
+                        }else{
+                            content += "<td>" + attr[value] + "</td>";
+                        }
+                    });
+                    content += "</tr>";
+                })
+
+                content += "</tbody>"
+                $("#property-info-table").html(content);
+                $(".panel").addClass("collapse")
+                $('#panelInfo').removeClass('collapse');
+                $("#loading_spinner").hide();
+
+            }else{
+                var feature = response.features[0];
+                var attrs = feature.attributes;
+                var grp = new Graphic(feature.geometry,symbol);
+                grpLayer.add(grp);
+                
+                var content = " <tbody>";
+                response.fields.forEach(function (f){                
+                    var fieldAlias = f.alias
+                    content += "<tr><td><b>" + f.alias + ": </b></td><td>" + feature.attributes[f.name] + "</td></tr>";
+                });
+                
+                content += "</tbody>";
+                $("#property-info-table").html(content);
+                $(".panel").addClass("collapse")
+                $('#panelInfo').removeClass('collapse');
+                $("#loading_spinner").hide();
+            }
+            
+            
+        }
+    }
+
+    function promiseRejected(e){
+        $("#loading_spinner").hide();
+        console.log(e)
+    }
+
+    
 
     function initDataTable(layerId){
 

@@ -197,6 +197,36 @@ function exportCSVFile(headers, items, fileTitle) {
 }
 
 
+
+
+// Property Info Methods
+
+const selectButtonParcel = document.getElementById("select-by-rectangle-parcel");
+// click event for the select by rectangle button
+selectButtonParcel.addEventListener("click", () => {
+    app.isSelectingProperties = true;
+    app.view.popup.close();
+    app.sketchViewModel.create("rectangle");
+});
+
+
+function clearPropertyData(){
+    app.propertyResults = null;
+    app.isSelectingProperties = false;
+    const grpLayer = app.view.map.findLayerById("selection_graphic");
+    grpLayer.removeAll();
+}
+
+
+function downloadPropertyData(){
+    if(app.propertyResults.features.length){
+        
+        configExportTOCSV(app.propertyResults.features);
+    }
+}
+
+
+
 /*
 (function($) {
     "use strict";

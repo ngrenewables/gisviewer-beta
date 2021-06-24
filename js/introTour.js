@@ -12,11 +12,21 @@ function initTour(){
           title: 'View Map Layers',
           intro:'View and Toggle Map Layers',
           element: document.querySelector('.glyphicon.glyphicon-list').parentElement,
-          simulateClick: document.querySelector('.glyphicon.glyphicon-list'),
           position:'bottom',
           onchange: function() {
             $( ".panel.collapse" ).css("margin-top","150px");
             $( ".glyphicon.glyphicon-list" ).trigger( "click" );
+            
+          },
+        },
+        {
+          title: 'Property Info',
+          intro:'View ir export property info',
+          element: document.querySelector('.glyphicon.esri-icon-documentation').parentElement,
+          position:'bottom',
+          onchange: function() {
+            $( ".panel.collapse" ).css("margin-top","150px");
+            $( ".glyphiconesri-icon-documentation" ).trigger( "click" );
             
           },
         },
@@ -71,7 +81,8 @@ function initTour(){
             element: document.getElementById('topbar'),
             position:'right',
             onchange: function() {
-                $('#panelPrint').hide();
+                
+                togglePanel('panelPrint')
             }
           },
           {
@@ -80,7 +91,7 @@ function initTour(){
             element: document.getElementById('streetViewIcon'),
             position:'right',
             onchange: function() { 
-                console.log(app.view.ui)            
+                            
                 app.view.scale = 120000;
                 $("#streetIcon").trigger("click");
             }
@@ -90,7 +101,8 @@ function initTour(){
             intro:'View Layer Classification and Symbols',
             element: document.querySelector('.esri-expand--auto'),
             position:'bottom',
-            onchange: function() {              
+            onchange: function() {
+               $("#streetIcon").trigger("click");              
                 app.view.ui._components[1].widget.go();
                 $(".esri-expand--auto").trigger("click");
                 app.view.ui._components[4].widget.expand();
@@ -99,7 +111,8 @@ function initTour(){
           
     ]
     }).start().oncomplete(function (){
-        app.view.ui._components[4].widget.collapse(); 
+        app.view.ui._components[4].widget.collapse();
+        $( ".panel.collapse" ).css("margin-top","50px"); 
     });
 
 }

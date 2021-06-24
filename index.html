@@ -62,6 +62,7 @@
         </div>
       </li>
       <li><a role="button" onClick="togglePanel('panelLayers')"><span class="glyphicon glyphicon-list"></span> Layers</a></li>
+      <li><a role="button" onClick="togglePanel('panelInfo')"><span class="glyphicon esri-icon-documentation"></span> Info</a></li>
       <li><a role="button" onClick="togglePanel('panelFilter')"><span class="glyphicon glyphicon-filter"></span> Table</a></li>
       <li><a role="button" onClick="togglePanel('panelPrint')"><span class="glyphicon glyphicon-print"></span> Print</a></li>
     </ul>
@@ -74,6 +75,7 @@
 
   <div class="calcite-map calcite-map-absolute">
     <div id="mapViewDiv">
+      <i class="fa fa-spinner fa-spin fa-3x fa-fw" id="loading_spinner" style="display:none;color:#fff;position:absolute;z-index:100;top:50%;left:50%;" aria-hidden="true"></i>
       <div id="streetViewIcon" style="left:20px;top:275px;position:absolute;z-index:999;color:#fff;"><i id="streetIcon" style="cursor:pointer"
           onClick="showGSV()" class="fa fa-street-view fa-3x"></i><span class="tooltiptext">Select and Click on Map to see StreetView</span></div>
 
@@ -156,6 +158,34 @@
       <div id="collapsePrint" class="panel-collapse" role="tabpanel" aria-labelledby="headingPrint">
         <div class="panel-body">
           <div id="printDiv"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="panelInfo" class="panel collapse">
+      <div id="headingInfo" class="panel-heading calcite-bgcolor-dark-blue" role="tab">
+        <div class="panel-title">
+          <a class="panel-toggle"><span class="glyphicon glyphicon-info" aria-hidden="true"></span><span
+              class="panel-label">Property Info</span></a>
+          <a class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelInfo"><span
+              class="esri-icon esri-icon-close" aria-hidden="true"></span></a>
+        </div>
+      </div>
+      <div id="collapsePrint" class="panel-collapse" role="tabpanel" aria-labelledby="headingInfo">
+        <div class="panel-body">
+          <div id="buttonbar">
+            <lable>Select By Drawing Rectangle and Export CSV data</lable><br/>
+            <button class="action-button esri-icon-cursor-marquee" id="select-by-rectangle-parcel" type="button"
+              title="Select on map"></button>
+            <button class="action-button esri-icon-erase" onclick="clearPropertyData()" id="clear-selection-parcel" type="button" title="Clear Selections"></button>
+            <button class="action-button" onclick="downloadPropertyData()" type="button" title="Download CSV"><i class="fa fa-file-excel-o" aria-hidden="true"></i></button>
+            <!--button style="float:right;width:100px;display:none;" class="action-button esri-icon-down" id="toggle-table" onclick="toggleTablePanel()" type="button" title="Clear Selections"> Hide Table</button-->
+          </div>
+          <br/>
+          <table id="property-info-table" class="table modifier-class">
+            
+          </table>
         </div>
       </div>
     </div>
