@@ -90,7 +90,8 @@ function initTour(){
             intro:'View Layer Classification and Symbols',
             element: document.querySelector('.esri-expand--auto'),
             position:'bottom',
-            onchange: function() {              
+            onchange: function() {   
+                $("#streetIcon").trigger("click");           
                 app.view.ui._components[1].widget.go();
                 $(".esri-expand--auto").trigger("click");
                 app.view.ui._components[4].widget.expand();
@@ -99,7 +100,8 @@ function initTour(){
           
     ]
     }).start().oncomplete(function (){
-        app.view.ui._components[4].widget.collapse(); 
+        app.view.ui._components[4].widget.collapse();
+        $( ".panel.collapse" ).css("margin-top","50px"); 
     });
 
 }
