@@ -101,7 +101,14 @@ function initTour(){
     ]
     }).start().oncomplete(function (){
         app.view.ui._components[4].widget.collapse();
-        $( ".panel.collapse" ).css("margin-top","50px"); 
+        $( ".panel.collapse" ).css("margin-top","50px");
+        $( "#panelLayers" ).removeClass("collapse"); 
+    }).onexit(function (){
+         $( ".panel.collapse" ).css("margin-top","50px");
+         $( "#panelLayers" ).removeClass("collapse"); 
+    }).onskip(function (){
+      $( ".panel.collapse" ).css("margin-top","50px");
+      $( "#panelLayers" ).removeClass("collapse"); 
     });
 
 }
