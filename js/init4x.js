@@ -106,6 +106,14 @@ require([
             ui: { components: [] }
         });
 
+        mapView.watch('updating', function(evt){        
+            if(evt === true){
+                $("#map_loading_spinner").show();
+            }else {
+                $("#map_loading_spinner").hide();
+            }
+        });
+
         app.view = mapView;
 
 
@@ -131,6 +139,8 @@ require([
         
         // Popup and panel sync
         mapView.when(function (m) {
+            
+
             document.getElementById("mapTitle").innerHTML =  mapView.map.portalItem.title
             var print = new Print({
                 view: mapView,
