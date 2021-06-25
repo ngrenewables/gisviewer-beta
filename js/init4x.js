@@ -118,7 +118,7 @@ require([
 
 
 
-        const selectionGraphicsLayer = new GraphicsLayer({id:"selection_graphic"});
+        const selectionGraphicsLayer = new GraphicsLayer({id:"selection_graphic","listMode":"hide"});
         mapView.map.add(selectionGraphicsLayer);
 
         app.sketchViewModel = new SketchViewModel({
@@ -254,7 +254,8 @@ require([
             copyright: 'Google',
             opacity: 1,
             minScale: 500000,
-            visible: false
+            visible: false,
+            listMode:"hide"
         });
         app.view.map.add(streetViewTileLayer);
 
