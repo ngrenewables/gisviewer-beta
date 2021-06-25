@@ -327,8 +327,16 @@ require([
         highlightOnRowSelectEnabled: false,
         fieldConfigs: fieldMap,
         menuConfig:buttonMenu,
+        highlightOnRowSelectEnabled:true,
         container: document.getElementById("tableDiv")
       });
+
+      app.featureTable.on("selection-change",function(e) {
+          if(e.added.length){
+              
+              app.view.goTo(e.added[0].feature);
+          }
+      })
 
       setTimeout(function(){
         $(".esri-feature-table__loader-container").html('<a role="button" onclick="toggleTablePanel()" ><span style="display:inline;color:black;font-size:24;font-weight:bold;margin-top:10px;" class="esri-icon-close"></span></a>');

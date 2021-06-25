@@ -200,9 +200,9 @@ body {
     
   }
   
-  .container .esri-feature-table__menu{
+  /*.container .esri-feature-table__menu{
     order:1 !important;
-  }
+  }*/
 
   .esri-field-column__header-content{
     font-size:14px;
