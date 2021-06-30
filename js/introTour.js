@@ -21,6 +21,17 @@ function initTour(){
           },
         },
         {
+          title: 'View and Export Property Information',
+          intro:'Turn On Parcel Boundary Layer from layer list and click on map to view property info',
+          element: document.querySelector('.glyphicon.esri-icon-documentation').parentElement,
+          position:'bottom',
+          onchange: function() {
+            $( ".panel.collapse" ).css("margin-top","150px");
+            $( ".glyphicon.esri-icon-documentation" ).trigger( "click" );
+          
+          },
+        },
+        {
           title: 'View Data Table ',
           element: document.querySelector('.glyphicon.glyphicon-filter').parentElement,
           intro: 'View & Export Tabular Data for any Map Layer',
