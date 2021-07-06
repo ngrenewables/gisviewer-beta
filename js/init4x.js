@@ -7,7 +7,11 @@ var app = {
         sketchViewModel:null,
         featureTable:null,
         selectedFeatures:null,
-        homeWidget:null
+        homeWidget:null,
+        ref:null,
+        propertyResults:null,
+        isSelectingProperties:false,
+        regionCenter:null
 }
 var activeWidget = null;
 require([
@@ -46,11 +50,16 @@ require([
     "esri/widgets/Sketch/SketchViewModel",
     "esri/Graphic",
     "esri/geometry/geometryEngineAsync",
+    "esri/geometry/support/webMercatorUtils",
+    "esri/geometry/Polygon",
     "esri/widgets/FeatureTable/Grid/support/ButtonMenu",
     "esri/widgets/FeatureTable/Grid/support/ButtonMenuItem",
     "dojo/domReady!"
-], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, CalciteMaps, CalciteMapArcGISSupport, 
-    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,Graphic,geometryEngineAsync,ButtonMenu,ButtonMenuItem) {
+], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, 
+    CalciteMaps, CalciteMapArcGISSupport, 
+    esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,
+    Graphic,geometryEngineAsync,webMercatorUtils,Polygon,
+    ButtonMenu,ButtonMenuItem) {
 
 
     esriConfig.portalUrl = "https://lwweb01.geronimoenergy.local/portal/sharing";
@@ -76,7 +85,6 @@ require([
 
     esriId.checkSignInStatus(info.portalUrl + "/sharing")
         .then((e) => {
-            
             loadMap();
         })
         .catch((e) => {
@@ -134,11 +142,45 @@ require([
               });
               const queryGeometry = await geometryEngineAsync.union(geometries.toArray());
               selectLayerFeatures(queryGeometry);
+              
+              /*if(app.isSelectingProperties == true){
+                queryLayer(queryGeometry);
+              }else{
+                selectLayerFeatures(queryGeometry);
+              }*/
             }
         });
         
         // Popup and panel sync
         mapView.when(function (m) {
+
+            app.regionCenter = webMercatorUtils.webMercatorToGeographic(mapView.center);
+
+             
+            const refNumbers = m.map.portalItem.tags.filter(function (e) {
+                return e.match(/lg-ref:/g)
+            })
+
+            if(refNumbers.length) {
+                const refNumber = refNumbers[0].split(":")[1];
+                app.ref = refNumber;
+
+                $.ajax({
+                    method: 'POST',
+                    url: 'https://tiles.makeloveland.com/api/v1/sources?token=' + refNumber,
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify({
+                      "query": {
+                        "parcel": true,
+                      },
+                      "styles": "Map { background-color: rgba(0,0,0,0); } #loveland { line-color: orange;line-width: 1.25; }",
+                    }),
+                  }).done(function(data) {
+                       var tiledLayer = new WebTileLayer({urlTemplate: data.tiles[0],"id":"parcel_boundary",visible:false,title:"Parcel Boundary","minScale":57600, copyright:"Landgrid Map tiles"});
+                       mapView.map.add(tiledLayer);
+                  })
+            }
             
 
             document.getElementById("mapTitle").innerHTML =  mapView.map.portalItem.title
@@ -179,11 +221,18 @@ require([
             initTour();
         });
 
-        mapView.on("click",function(e) {
+        mapView.on("click",function(evt) {
             
             if(app.streetViewActive){
-                window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${e.mapPoint.latitude},${e.mapPoint.longitude}&cbp=11,0,0,0,0`);
+                window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${evt.mapPoint.latitude},${evt.mapPoint.longitude}&cbp=11,0,0,0,0`);
                 showGSV();
+            }else{
+                const lyr = mapView.map.findLayerById("parcel_boundary");
+                if(lyr && lyr.visible == true){
+                    const geoPoint = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
+                    //console.log(geoPoint)
+                    queryByLocation(geoPoint);
+                }
             }
         })
 
@@ -233,13 +282,6 @@ require([
         });
         mapView.ui.add(scaleBar, "bottom-left");
 
-        /*var attribution = new Attribution({
-            view: mapView
-        });
-        mapView.ui.add(attribution, "manual");*/
-
-       
-
         mapView.ui.add("topbar", "top-right");
         
 
@@ -260,6 +302,35 @@ require([
         app.view.map.add(streetViewTileLayer);
 
         setupGSV();
+    
+    }
+
+    function queryByLocation(mapPoint){
+
+        $.get( "https://landgrid.com/api/v1/search.json",{ lat:mapPoint.y ,lon:mapPoint.x ,token:app.ref}, 
+           function( data ) {
+             if(data.results.length){
+                //app.propertyResults = data.results;
+                
+                const queryData = data.results.map( (feature) => {
+                    const polygon = new Polygon({
+                        rings: feature.geometry.coordinates,
+                        spatialReference: { wkid: 4326 }
+                    });
+                    return {geometry:polygon,attributes:feature.properties.fields,alias:feature.properties.field_labels}
+
+                });
+                
+                const fields = [];
+                for (const [key, value] of Object.entries(data.results[0].properties.field_labels)) {
+                    console.log(`${key}: ${value}`);
+                    fields.push({name:key,alias:value});
+                  }
+                  console.log({"features":queryData,fields:fields});
+                renderQueryResults({"features":queryData,fields:fields},Graphic,)
+             }
+        });
+    
     
     }
 
@@ -332,8 +403,7 @@ require([
       });
 
       app.featureTable.on("selection-change",function(e) {
-          if(e.added.length){
-              
+          if(e.added.length){              
               app.view.goTo(e.added[0].feature);
           }
       })

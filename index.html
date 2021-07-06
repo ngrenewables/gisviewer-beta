@@ -62,6 +62,7 @@
         </div>
       </li>
       <li><a role="button" onClick="togglePanel('panelLayers')"><span class="glyphicon glyphicon-list"></span> Layers</a></li>
+      <li><a role="button" onClick="togglePanel('panelInfo')"><span class="glyphicon esri-icon-documentation"></span> Property Info</a></li>
       <li><a role="button" onClick="togglePanel('panelFilter')"><span class="glyphicon glyphicon-filter"></span> Table</a></li>
       <li><a role="button" onClick="togglePanel('panelPrint')"><span class="glyphicon glyphicon-print"></span> Print</a></li>
     </ul>
@@ -162,6 +163,35 @@
     </div>
 
 
+    <!-- Panel - Info -->
+    <div id="panelInfo" class="panel collapse">
+      <div id="headingInfo" class="panel-heading calcite-bgcolor-dark-blue" role="tab">
+        <div class="panel-title">
+          <a class="panel-toggle"><span class="glyphicon glyphicon-info" aria-hidden="true"></span><span
+              class="panel-label">Property Info</span></a>
+          <a class="panel-close" role="button" data-toggle="collapse" tabindex="0" href="#panelInfo"><span
+              class="esri-icon esri-icon-close" aria-hidden="true"></span></a>
+        </div>
+      </div>
+      <div id="collapsePrint" class="panel-collapse" role="tabpanel" aria-labelledby="headingInfo">
+        <div class="panel-body">
+          <div id="buttonbar">
+            <lable>Click on Map to select property and Export CSV data</lable><br/>
+            <button class="action-button esri-icon-cursor-marquee" style="display:none" id="select-by-rectangle-parcel" type="button"
+              title="Select on map"></button>
+            <button class="action-button esri-icon-erase" onclick="clearPropertyData()" id="clear-selection-parcel" type="button" title="Clear Selections"></button>
+            <button class="action-button" onclick="downloadPropertyData()" type="button" title="Download CSV"><i class="fa fa-file-excel-o" aria-hidden="true"></i></button>
+            <!--button style="float:right;width:100px;display:none;" class="action-button esri-icon-down" id="toggle-table" onclick="toggleTablePanel()" type="button" title="Clear Selections"> Hide Table</button-->
+          </div>
+          <br/>
+          <table id="property-info-table" style="table-layout: fixed;" class="table modifier-class">
+            
+          </table>
+        </div>
+      </div>
+    </div>
+
+
     
 
 
@@ -194,9 +224,7 @@
   <!-- ArcGIS JS 4 -->
   <script src="https://js.arcgis.com/4.19/"></script>
 
-  <!--script src="https://colorlib.com/etc/bootstrap-sidebar/sidebar-04/js/jquery.min.js"></script-->
 
-  
 
   <script src="./js/jquery-3.6.0.min.js" ></script>
 
@@ -209,6 +237,7 @@
   <script src="./js/helper.js"> </script>
 
   <script src="./js/gsv.js"> </script>
+  <script src="./js/landgrid-api.js"> </script>
 
   <script src="./js/introTour.js"> </script>
 
