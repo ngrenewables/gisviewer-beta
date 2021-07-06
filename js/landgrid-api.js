@@ -12,19 +12,25 @@ function renderQueryResults(response,Graphic){
       };
    
     const grpLayer = app.view.map.findLayerById("selection_graphic");
-    grpLayer.removeAll();
-    app.propertyResults = response;
+    //grpLayer.removeAll();
+    //app.propertyResults = response;
     if(response.features.length){
+        if(Array.isArray(app.propertyResults)){
+            app.propertyResults = app.propertyResults.concat(response.features)
+        }else{
+            app.propertyResults = response.features
+        }
+        
         app.isSelectingProperties = false;
-        if(response.features.length > 1){
-            const headerLabels = {"Parcel Id":"parcel_id","Owner":"owner","Address":["mail_address1","mail_address2","mail_address3"]}
+        if(app.propertyResults.length > 1){
+            const headerLabels = {"Owner":"owner","Mail Address":["mailadd","mail_city","mail_state2","mail_zip"],"Prop. Area (Acres)":"ll_gisacre"}
             var content = "<thead><tr>";
             $.each(headerLabels,function(key,value){
                 content += "<td><b>" + key + "</b></td>";
             });
             content += "</tr></thead><tbody>";
 
-            response.features.forEach(function(feature) {
+            app.propertyResults.forEach(function(feature) {
                 var grp = new Graphic(feature.geometry,symbol);
                 grpLayer.add(grp)
                 const attr = feature.attributes;
@@ -32,7 +38,7 @@ function renderQueryResults(response,Graphic){
                 $.each(headerLabels,function(key,value) {
                     if(Array.isArray(value)){
                         const vals = value.map( (f) => feature.attributes[f])
-                        content += "<td>" + vals.join(",") + "</td>";
+                        content += "<td>" + vals[0]  + " <br/>" + vals[1] + " <br />" + vals[2]  + "," + vals[3] + "</td>";
                     }else{
                         content += "<td>" + attr[value] + "</td>";
                     }
@@ -100,9 +106,9 @@ function clearPropertyData(){
 
 
 function downloadPropertyData(){
-    if(app.propertyResults.features.length){
+    if(app.propertyResults.length){
         
-        configExportTOCSV(app.propertyResults.features);
+        configExportTOCSV(app.propertyResults);
     }
 }
 

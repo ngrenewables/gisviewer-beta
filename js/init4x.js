@@ -174,10 +174,10 @@ require([
                       "query": {
                         "parcel": true,
                       },
-                      "styles": "Map { background-color: rgba(0,0,0,0); } #loveland { line-color: orange;line-width: 1.25; }",
+                      "styles": "Map { background-color: rgba(0,0,0,0); } #loveland { line-color: blue;line-width: 1.2; }",
                     }),
                   }).done(function(data) {
-                       var tiledLayer = new WebTileLayer({urlTemplate: data.tiles[0],"id":"parcel_boundary",visible:false,title:"Parcel Boundary","minScale":57600, copyright:"Landgrid Map tiles"});
+                       var tiledLayer = new WebTileLayer({urlTemplate: data.tiles[0],"id":"parcel_boundary",visible:false,title:"Parcel Boundary","minScale":115200, copyright:"Landgrid Map tiles"});
                        mapView.map.add(tiledLayer);
                   })
             }
