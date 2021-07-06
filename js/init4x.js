@@ -306,12 +306,12 @@ require([
     }
 
     function queryByLocation(mapPoint){
-
+        $("#map_loading_spinner").show();
         $.get( "https://landgrid.com/api/v1/search.json",{ lat:mapPoint.y ,lon:mapPoint.x ,token:app.ref}, 
            function( data ) {
              if(data.results.length){
                 //app.propertyResults = data.results;
-                
+                $("#map_loading_spinner").hide();
                 const queryData = data.results.map( (feature) => {
                     const polygon = new Polygon({
                         rings: feature.geometry.coordinates,
@@ -326,7 +326,7 @@ require([
                     console.log(`${key}: ${value}`);
                     fields.push({name:key,alias:value});
                   }
-                  console.log({"features":queryData,fields:fields});
+                  
                 renderQueryResults({"features":queryData,fields:fields},Graphic,)
              }
         });
