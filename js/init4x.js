@@ -73,7 +73,9 @@ require([
         portalUrl: "https://lwweb01.geronimoenergy.local/portal",
         // Uncomment the next line to prevent the user's signed in state from being shared with other apps on the same domain with the same authNamespace value.
         // authNamespace: "portal_oauth_inline",
-        popup: true
+        popup: false,
+        preserveUrlHash:true
+
     });
 
     
