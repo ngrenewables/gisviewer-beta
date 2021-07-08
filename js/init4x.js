@@ -18,7 +18,7 @@ require([
     // ArcGIS
     "esri/WebMap",
     "esri/views/MapView",
-
+    "esri/views/SceneView",
     // Widgets
     "esri/widgets/Home",
     "esri/widgets/Zoom",
@@ -55,7 +55,7 @@ require([
     "esri/widgets/FeatureTable/Grid/support/ButtonMenu",
     "esri/widgets/FeatureTable/Grid/support/ButtonMenuItem",
     "dojo/domReady!"
-], function (WebMap, MapView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, 
+], function (WebMap, MapView,SceneView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, 
     CalciteMaps, CalciteMapArcGISSupport, 
     esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,
     Graphic,geometryEngineAsync,webMercatorUtils,Polygon,
@@ -102,11 +102,22 @@ require([
         var map = new WebMap({
             portalItem: {
                 id: mapId
-            }
+            },
+            ground: "world-elevation"
         });
 
         // View
-        var mapView = new MapView({
+        /*var mapView = new MapView({
+            container: "mapViewDiv",
+            map: map,
+            padding: {
+                top: 50,
+                bottom: 0
+            },
+            ui: { components: [] }
+        });*/
+
+        var mapView = new SceneView({
             container: "mapViewDiv",
             map: map,
             padding: {
@@ -125,8 +136,6 @@ require([
         });
 
         app.view = mapView;
-
-
 
         const selectionGraphicsLayer = new GraphicsLayer({id:"selection_graphic","listMode":"hide"});
         mapView.map.add(selectionGraphicsLayer);
