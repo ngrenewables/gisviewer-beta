@@ -19,6 +19,8 @@ require([
     "esri/WebMap",
     "esri/views/MapView",
     "esri/views/SceneView",
+    "esri/layers/ElevationLayer",
+    "esri/layers/BaseElevationLayer",
     // Widgets
     "esri/widgets/Home",
     "esri/widgets/Zoom",
@@ -55,7 +57,9 @@ require([
     "esri/widgets/FeatureTable/Grid/support/ButtonMenu",
     "esri/widgets/FeatureTable/Grid/support/ButtonMenuItem",
     "dojo/domReady!"
-], function (WebMap, MapView,SceneView, Home, Zoom, Compass, Search, Legend, BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, 
+], function (WebMap, MapView,SceneView, ElevationLayer,
+    BaseElevationLayer,Home, Zoom, Compass, Search, Legend, 
+    BasemapToggle, ScaleBar, Attribution,Expand, Collapse, Dropdown, 
     CalciteMaps, CalciteMapArcGISSupport, 
     esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,
     Graphic,geometryEngineAsync,webMercatorUtils,Polygon,
@@ -98,12 +102,71 @@ require([
 
         const mapId = getWebMapId();
 
+
+        const ExaggeratedElevationLayer = BaseElevationLayer.createSubclass({
+            // Add an exaggeration property whose value will be used
+            // to multiply the elevations at each tile by a specified
+            // factor. In this case terrain will render 100x the actual elevation.
+  
+            properties: {
+              exaggeration: 2.5
+            },
+  
+            // The load() method is called when the layer is added to the map
+            // prior to it being rendered in the view.
+            load: function () {
+              // TopoBathy3D contains elevation values for both land and ocean ground
+              this._elevation = new ElevationLayer({
+                url:
+                  "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/TopoBathy3D/ImageServer"
+              });
+  
+              // wait for the elevation layer to load before resolving load()
+              this.addResolvingPromise(
+                this._elevation.load().then(() => {
+                  // get tileInfo, spatialReference and fullExtent from the elevation service
+                  // this is required for elevation services with a custom spatialReference
+                  this.tileInfo = this._elevation.tileInfo;
+                  this.spatialReference = this._elevation.spatialReference;
+                  this.fullExtent = this._elevation.fullExtent;
+                })
+              );
+  
+              return this;
+            },
+  
+            // Fetches the tile(s) visible in the view
+            fetchTile: function (level, row, col, options) {
+              // calls fetchTile() on the elevationlayer for the tiles
+              // visible in the view
+              return this._elevation.fetchTile(level, row, col, options).then(
+                function (data) {
+                  const exaggeration = this.exaggeration;
+                  // `data` is an object that contains the
+                  // the width and the height of the tile in pixels,
+                  // and the values of each pixel
+                  for (let i = 0; i < data.values.length; i++) {
+                    // Multiply the given pixel value
+                    // by the exaggeration value
+                    data.values[i] = data.values[i] * exaggeration;
+                  }
+  
+                  return data;
+                }.bind(this)
+              );
+            }
+          });
+
+        const elevationLayer = new ExaggeratedElevationLayer();
+
         // Map
         var map = new WebMap({
             portalItem: {
                 id: mapId
             },
-            ground: "world-elevation"
+            ground: {
+                layers: [elevationLayer]
+              }
         });
 
         // View
@@ -188,8 +251,8 @@ require([
                       "styles": "Map { background-color: rgba(0,0,0,0); } #loveland { line-color: blue;line-width: 1.2; }",
                     }),
                   }).done(function(data) {
-                       var tiledLayer = new WebTileLayer({urlTemplate: data.tiles[0],"id":"parcel_boundary",visible:false,title:"Parcel Boundary","minScale":115200, copyright:"Landgrid Map tiles"});
-                       mapView.map.add(tiledLayer);
+                       var tiledLayer = new WebTileLayer({urlTemplate: data.tiles[0],"id":"parcel_boundary",visible:true,title:"Parcel Boundary","minScale":115200, copyright:"Landgrid Map tiles"});
+                       mapView.map.add(tiledLayer,5);
                   })
             }
             
@@ -233,13 +296,13 @@ require([
         });
 
         mapView.on("click",function(evt) {
-            
+            console.log(mapView.scale)
             if(app.streetViewActive){
                 window.open(`http://maps.google.com/maps?q=&layer=c&cbll=${evt.mapPoint.latitude},${evt.mapPoint.longitude}&cbp=11,0,0,0,0`);
                 showGSV();
             }else{
                 const lyr = mapView.map.findLayerById("parcel_boundary");
-                if(lyr && lyr.visible == true){
+                if(lyr && lyr.visible == true && mapView.scale < 115200){
                     const geoPoint = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
                     //console.log(geoPoint)
                     queryByLocation(geoPoint);
@@ -334,7 +397,7 @@ require([
                 
                 const fields = [];
                 for (const [key, value] of Object.entries(data.results[0].properties.field_labels)) {
-                    console.log(`${key}: ${value}`);
+                    //console.log(`${key}: ${value}`);
                     fields.push({name:key,alias:value});
                   }
                   
