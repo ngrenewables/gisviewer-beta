@@ -449,11 +449,14 @@ require([
                 if(app.selectedFeatures){
                     configExportTOCSV(app.selectedFeatures)
                 }else{
-                    const query = {
+                    const query = app.featureTable.createQuery();
+                    query.outFields = ["*"];
+                    query.returnGeometry = false;
+                    /*{
                         where: "1=1",
                         outFields: ["*"],
                         returnGeometry:false
-                    };            
+                    };*/            
                     // query graphics from the csv layer view. Geometry set for the query
                     // can be polygon for point features and only intersecting geometries are returned
                     app.featureTable.layer.queryFeatures(query)
