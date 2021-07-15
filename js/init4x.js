@@ -449,7 +449,7 @@ require([
                 if(app.selectedFeatures){
                     configExportTOCSV(app.selectedFeatures)
                 }else{
-                    const query = app.featureTable.createQuery();
+                    const query = app.featureTable.layer.createQuery();
                     query.outFields = ["*"];
                     query.returnGeometry = false;
                     /*{
