@@ -64,6 +64,11 @@ require([
     esriConfig, Portal, OAuthInfo, esriId, Print,LayerList,WebTileLayer,GraphicsLayer,Collection,FeatureTable,SketchViewModel,
     Graphic,geometryEngineAsync,webMercatorUtils,Polygon,
     ButtonMenu,ButtonMenuItem) {
+        
+        
+    const mapId = getWebMapId();
+        
+    window.location = 'https://lwweb01.geronimoenergy.local/GISWebApp/index.html#' + mapId;
 
 
     esriConfig.portalUrl = "https://lwweb01.geronimoenergy.local/portal/sharing";
